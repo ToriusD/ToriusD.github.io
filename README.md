@@ -7,6 +7,7 @@
 - JavaScript
 - HTML 
 - CSS
+- Библиотеки стилей Bootstrap 4
 
 
 [Демонстрация работы](https://toriusd.github.io/LibS/)
