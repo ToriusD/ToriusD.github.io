@@ -39,18 +39,9 @@ body {
   background: rgba(255, 151, 55, 0.959);
 } */
 
-
-
-
-
-
-
-
-
-
-
-
-
+.p-fix {
+  padding-inline-start: 40px;
+}
 
 .footer {
   position: relative;
