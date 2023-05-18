@@ -889,7 +889,6 @@ new MFooter('#app')
   function mainFooterInit(content) {
     return ` ${content} `
   }
-s
 
 
 /*-----------------------*/ 
