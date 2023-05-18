@@ -18,10 +18,10 @@ url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAUVBMV
 
 const text_secondary = ' text-secondary'
 const d_block = ' inline-block'
-const col_size = ' col-lg'
+const col_size = ' col-sm'
 const empty_style = ''
 const link_badge = ' badge badge-dark w-100'
-const link_nav = ' nav-item nav-link'
+const link_nav = ' nav-item nav-link border-light border-right'
 
 
 
@@ -113,7 +113,8 @@ class ImageBlock extends Block {
   }
   toHTML() {
     const {imageStyles: _is, alt = '', styles} = this.options
-    return row(`<img src="${this.value}" alt="${alt}" style="${css(_is)}"/>`, css(styles))
+    // return row(`<img src="${this.value}" alt="${alt}" style="${css(_is)}"/>`, css(styles))
+    return `<div class = "container"><div class = "row"><img src="${this.value}" alt="${alt}" style="${css(_is)}"/></div></div>`
   }
 }
 class TextBlock extends Block {
@@ -160,6 +161,9 @@ class MainFooter extends Block {
 /*------------------------*/
 
 
+// СДЕЛАТЬ ФИЛИАЛЫ
+
+
 const model = [
 
   // new ImageBlock(image_m, {
@@ -185,10 +189,12 @@ const model = [
     alink('#publishing ','Издательства',link_nav),
     alink('#about','О библиотеке',link_nav),
     alink('#services','Услуги',link_nav),
+    alink('http://86.57.171.98:8080/alis/StartEK/index.php','Электронный каталог',link_nav),
     alink('#news','Новости',link_nav),
     alink('#contacts','Контакты',link_nav),
   ], {
-      styles: {}
+      styles: {
+      }
     }
   ),
 
@@ -349,18 +355,32 @@ const model = [
       }
     }
   ),
-  new ColumnBlock([
-    col(imageitem('https://168856.lp.tobiz.net/img/900x900/85574746e46f43add09f5e2ec49d3912.jpg', 'align-self-center', 'width: 300px'),'justify-content: center'),
-    col(imageitem('https://168856.lp.tobiz.net/img/900x900/799c5415f7b94a3555b214af27b051e5.jpg', 'align-self-center', 'width: 300px'),'justify-content: center'),
-    col(imageitem('https://168856.lp.tobiz.net/img/900x900/fc8e87417fd817ddb741674f74373648.jpg', 'align-self-center', 'width: 300px'),'justify-content: center')
-  ], {
-      styles: {
-        'text-align':'center',
-        'font-weight': 'bold',
-        'padding-bottom': '2em',
-      }
-    }
+  // new ColumnBlock([
+  //   col(imageitem('https://168856.lp.tobiz.net/img/900x900/85574746e46f43add09f5e2ec49d3912.jpg', 'align-self-center', 'width: 300px'),'justify-content: center'),
+  //   col(imageitem('https://168856.lp.tobiz.net/img/900x900/799c5415f7b94a3555b214af27b051e5.jpg', 'align-self-center', 'width: 300px'),'justify-content: center'),
+  //   col(imageitem('https://168856.lp.tobiz.net/img/900x900/fc8e87417fd817ddb741674f74373648.jpg', 'align-self-center', 'width: 300px'),'justify-content: center')
+  // ], {
+  //     styles: {
+  //       'text-align':'center',
+  //       'font-weight': 'bold',
+  //       'padding-bottom': '2em',
+  //     }
+  //   }
+  // ),
+
+  new ImageBlock('https://168856.lp.tobiz.net/img/900x700/7e6d5274d59bb3a7283d82e61a5cddfa.jpg', {
+    styles: {
+      //border: '10px solid red',
+      display: 'flex',
+      'justify-content': 'center'
+    },
+    imageStyles: {
+      width: '100%'
+    },
+    alt: ''
+  }
   ),
+  
   new TextBlock(
     `<div class = "container"><p>Наша миссия - воспитывать всеобщую страсть к чтению, сотрудничая с авторами, чтобы помогать создавать истории и передавать идеи, которые информируют, развлекают и вдохновляют, а также соединяют их с читателями повсюду. Мы являемся международным домом для почти 400 независимых редакционных и творческих изданий.</p>
 
@@ -597,8 +617,8 @@ function sliderbar() {
       <div class="carousel-inner slider_block">
         <div class="carousel-item active">
           <img src="http://novopolotsk-lib.by/images/upload_slides/Slide1.jpg" class="w-100 sliderimage"  alt="1">
-          <div class="carousel-caption d-none d-md-block">
-            <div class="w-100 hello_world" style="z-index: 999">
+          <div class="carousel-caption">
+            <div class="w-100 hello_world">
               <div class="row">
                 <div class="col-12 text-center"><a href="http://86.57.171.98:8080/alis/StartEK/index.php">
                   <h1 class="display-1 text-light">Добро пожаловать</h1>
@@ -612,8 +632,8 @@ function sliderbar() {
         </div>
         <div class="carousel-item">
           <img src="http://novopolotsk-lib.by/images/upload_slides/Slide3.jpg" class="w-100 sliderimage" alt="2">
-          <div class="carousel-caption d-none d-md-block">
-            <div class="w-100 hello_world" style="z-index: 999">
+          <div class="carousel-caption">
+            <div class="w-100 hello_world">
               <div class="row">
                 <div class="col-12 text-center"><a href="http://86.57.171.98:8080/alis/StartEK/index.php">
                   <h1 class="display-1 text-light">Добро пожаловать</h1>
@@ -627,8 +647,8 @@ function sliderbar() {
         </div>
         <div class="carousel-item">
           <img src="http://novopolotsk-lib.by/images/upload_slides/Slide4.jpg" class="w-100 sliderimage" alt="3">
-          <div class="carousel-caption d-none d-md-block">
-            <div class="w-100 hello_world" style="z-index: 999">
+          <div class="carousel-caption">
+            <div class="w-100 hello_world">
               <div class="row">
                 <div class="col-12 text-center"><a href="http://86.57.171.98:8080/alis/StartEK/index.php">
                   <h1 class="display-1 text-light">Добро пожаловать</h1>
