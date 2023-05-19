@@ -72,7 +72,7 @@ a:hover, p:hover{
   background-color: black;
 }
 .hello_world {
-  padding: 15em;
+  padding: 15%;
   /* background-image: linear-gradient(rgb(94, 159, 255), rgba(255,255,255,0) 110%); */
 }
 
@@ -94,6 +94,12 @@ a:hover, p:hover{
   align-items: center;
   flex-direction: column;
   /* margin-top: 5em; */
+}
+
+.pict_react:hover {
+  transform: translateY(-10px);
+  transition: 0.5s;
+  cursor: pointer;
 }
 
 .social-icon,
