@@ -102,6 +102,13 @@ a:hover, p:hover{
   cursor: pointer;
 }
 
+.pict_thumbnail {
+  border: 1px solid #ddd; 
+  border-radius: 4px;  
+  padding: 5px; 
+  width: 150px; 
+}
+
 .social-icon,
 .menu {
   position: relative;

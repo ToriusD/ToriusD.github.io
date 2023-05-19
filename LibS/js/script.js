@@ -85,7 +85,7 @@ NewsJSONobj = {
 }
 
 GaleryJSONobj = {
-  'classes': 'align-self-center rounded pb-3 pict_react',
+  'classes': 'align-self-center rounded my-3 pict_react pict_thumbnail',
   'width': 'width: 15em',
   'pict1': {
     'id': 'img1',
@@ -493,18 +493,21 @@ const model = [
   ),
 
   new ImageBlock('https://168856.lp.tobiz.net/img/900x700/7e6d5274d59bb3a7283d82e61a5cddfa.jpg', {
-    styles: {
-      //border: '10px solid red',
-      display: 'flex',
-      'justify-content': 'center'
-    },
-    imageStyles: {
-      width: '100%',
-      'object-fit': 'cover',
-      height: '30em',
-    },
-    alt: ''
-  }
+      styles: {
+        //border: '10px solid red',
+        display: 'flex',
+        'justify-content': 'center'
+      },
+      imageStyles: {
+        border: 'none',
+        'border-radius': '100%',
+        margin: 'auto',
+        width: '30em',
+        'object-fit': 'cover',
+        height: '30em',
+      },
+      alt: ''
+    }
   ),
   
   new TextBlock(
@@ -770,7 +773,7 @@ function sliderbar() {
               </div>
             </div>
         <div class="carousel-item active">
-          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide1.jpg" class="w-100 sliderimage"  alt="1" ismap>
+          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide1.jpg" class="w-100 sliderimage" alt="1">
           <div class="carousel-caption">
             
             <h3>Библиотека им. В. Маяковского</h3>
@@ -778,7 +781,7 @@ function sliderbar() {
           </div>
         </div>
         <div class="carousel-item">
-          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide3.jpg" class="w-100 sliderimage" alt="2" ismap>
+          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide3.jpg" class="w-100 sliderimage" alt="2">
           <div class="carousel-caption">
             
             <h3>Библиотека им. К. Симонова</h3>
@@ -786,7 +789,7 @@ function sliderbar() {
           </div>
         </div>
         <div class="carousel-item">
-          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide4.jpg" class="w-100 sliderimage" alt="3" ismap>
+          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide4.jpg" class="w-100 sliderimage" alt="3">
           <div class="carousel-caption">
             
             <h3>Библиотека им. Я. Коласа</h3>
@@ -1123,7 +1126,7 @@ function NewsModal(context) {
       </button>
     </div>
     <div class="container">
-      <div class="row mx-auto" style="width: 500px;">
+      <div class="row mx-auto w-100" >
         <img src="${context['image']}" class="w-100 my-5"  alt="">
       </div>
       <div class="row">
