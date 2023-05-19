@@ -182,26 +182,26 @@ class Site {
 
 
 class Block {
-  constructor(type, value, options) {
+  constructor(type, value, options) {       
     this.type = type
     this.value = value
     this.options = options
   }
   toHTML() {
-    throw new Error('toHTML должен быть реализован')
+    throw new Error('toHTML должен быть реализован')      
   }
 }
 
-class TitleBlock extends Block {
+class TitleBlock extends Block {       
   constructor(value, options) {
-    super('title', value, options)
+    super('title', value, options)       
   }
   toHTML() {
     const {id = '', tag = 'h1', styles} = this.options
-    return row(col(`<${tag} id="${id}">${this.value}</${tag}>`), css(styles))
+    return row(col(`<${tag} id="${id}">${this.value}</${tag}>`), css(styles))  
   }
 }
-class ColumnBlock extends Block {
+class ColumnBlock extends Block {       
   constructor(value, options) {
     super('columns', value, options)
   }
@@ -211,7 +211,7 @@ class ColumnBlock extends Block {
   }
 }
 
-class SliderBlock extends Block {
+class SliderBlock extends Block {       
   constructor(value, options) {
     super('slider', value, options)
   }
@@ -221,7 +221,7 @@ class SliderBlock extends Block {
   }
 }
 
-class SomeContentBlock extends Block {
+class SomeContentBlock extends Block {       
   constructor(value, options) {
     super('somecontent', value, options)
   }
@@ -231,7 +231,7 @@ class SomeContentBlock extends Block {
   }
 }
 
-class ImageBlock extends Block {
+class ImageBlock extends Block {       
   constructor(value, options) {
     super('image', value, options)
   }
@@ -241,7 +241,7 @@ class ImageBlock extends Block {
     return `<div class = "container"><div class = "row"><img src="${this.value}" alt="${alt}" style="${css(_is)}"/></div></div>`
   }
 }
-class TextBlock extends Block {
+class TextBlock extends Block {       
   constructor(value, options) {
     super('text', value, options)
   }
@@ -249,7 +249,7 @@ class TextBlock extends Block {
     return row(col(`<p>${this.value}</p>`), css(this.options.styles))
   }
 }
-class NavigationBlock extends Block {
+class NavigationBlock extends Block {       
   constructor(value, options) {
     super('navigation', value, options)
   }
@@ -258,7 +258,7 @@ class NavigationBlock extends Block {
     return navbar(html.join(''), icon_image_m, css(this.options.styles))
   }
 }
-class IMGColBlock extends Block {
+class IMGColBlock extends Block {       
   constructor(value, options) {
     super('imgcols', value, options)
   }
@@ -268,7 +268,7 @@ class IMGColBlock extends Block {
   }
 }
 
-class MainFooter extends Block {
+class MainFooter extends Block {       
   constructor(value, options) {
     super('mainfoot', value, options)
   }
@@ -284,7 +284,6 @@ class MainFooter extends Block {
 /*-       Модель         -*/ 
 /*------------------------*/
 
-
 const model = [
 
   // new ImageBlock(image_m, {
@@ -299,8 +298,6 @@ const model = [
   //   alt: ''
   // }
   // ),
-
-
 
   new NavigationBlock([
     alink('#popular','Популярное',link_nav),
@@ -327,7 +324,6 @@ const model = [
     }
   ),
 
-  
   new TitleBlock('Откройте для себя новую книгу', {
       id: 'books',
       tag: 'h1',
@@ -338,7 +334,7 @@ const model = [
     }
   ),
   new ColumnBlock([ 
-    imageitem(BooksJSONobj.book1['id'], BooksJSONobj.book1['booklink'], BooksJSONobj.classes, BooksJSONobj.width),
+    imageitem(BooksJSONobj.book1['id'], BooksJSONobj.book1['booklink'], BooksJSONobj.classes, BooksJSONobj.width),  
     imageitem(BooksJSONobj.book2['id'], BooksJSONobj.book2['booklink'], BooksJSONobj.classes, BooksJSONobj.width),
     imageitem(BooksJSONobj.book3['id'], BooksJSONobj.book3['booklink'], BooksJSONobj.classes, BooksJSONobj.width),
     imageitem(BooksJSONobj.book4['id'], BooksJSONobj.book4['booklink'], BooksJSONobj.classes, BooksJSONobj.width),
@@ -355,7 +351,6 @@ const model = [
       }
     }
   ), 
-
 
   new TitleBlock('Самые популярные книги в этом месяце', {
     id: 'popular',
@@ -512,9 +507,7 @@ const model = [
   
   new TextBlock(
     `<div class = "container"><p>Наша миссия - воспитывать всеобщую страсть к чтению, сотрудничая с авторами, чтобы помогать создавать истории и передавать идеи, которые информируют, развлекают и вдохновляют, а также соединяют их с читателями повсюду. Мы являемся международным домом для почти 400 независимых редакционных и творческих изданий.</p>
-
   <p>Используя наш глобальный охват, внедряя новые технологии и сотрудничая с авторами на всех этапах процесса публикации, от дизайна и редактирования до продаж и маркетинга, производства и распространения, мы хотим предоставить им максимально возможную платформу.</p>
-  
   <p>В то же время мы яростно защищаем интеллектуальную собственность наших авторов и выступаем за свободу выражения мнений, гарантируя, что их голоса будут слышны за пределами страницы в обществах и сообществах по всему миру.​​​​​​​ Наша профессиональная команда профессионалов в области публикаций стремится помочь авторам реализовывать свои лучшие работы и находить новые инновационные способы донести истории и идеи до мировой аудитории.</p></div>`
     , {
       styles: {
@@ -532,8 +525,6 @@ const model = [
     }
   }
   ),
-
-
 
   new TitleBlock('Вы можете воспользоваться услугами', {
     id: 'services',
@@ -593,9 +584,6 @@ const model = [
     }
   ),
 
-
-
-
   new TitleBlock('Полезные ссылки', {
     tag: 'h1',
       styles: {
@@ -621,7 +609,6 @@ const model = [
       }
     }
   ), 
-
 
   new TitleBlock('Новости в нашем блоге', {
     tag: 'h1',
@@ -655,7 +642,6 @@ const model = [
       }
     }
   ),
-
 ]
 
 
@@ -724,23 +710,21 @@ function FooterInit(content) {
 }
 
 function mediaContentItem(id = '', name = '', content = '', time = '', img = '', classes = '') {
-  return                `<div id="${id}" class="media-body ${classes}">
-                          <div class="container">
-                            <div class="row new-row">
-                              <div class="col-3">
-                                ${imageitem('', img, "align-self-center mr-3 img-thumbnail rounded w-100", alt = 'Generic placeholder image')}
-                              </div>
-                              <div class="col-9 align-self-center">
-                                <div class="row">
-                                  <h5 class="mt-0">${name}</h5> <p class="mb-0 px-3">${time}</p>
-                                  <p class="text-truncate">${content}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>`
-
-                
+  return  `<div id="${id}" class="media-body ${classes}">
+              <div class="container">
+                <div class="row new-row">
+                  <div class="col-3">
+                    ${imageitem('', img, "align-self-center mr-3 img-thumbnail rounded w-100", alt = 'Generic placeholder image')}
+                  </div>
+                  <div class="col-9 align-self-center">
+                    <div class="row">
+                      <h5 class="mt-0">${name}</h5> <p class="mb-0 px-3">${time}</p>
+                      <p class="text-truncate">${content}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>`  
 }
 
 function mediaItem(content) {
