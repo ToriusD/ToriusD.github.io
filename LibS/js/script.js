@@ -770,7 +770,7 @@ function sliderbar() {
               </div>
             </div>
         <div class="carousel-item active">
-          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide1.jpg" class="w-100 sliderimage"  alt="1">
+          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide1.jpg" class="w-100 sliderimage"  alt="1" ismap>
           <div class="carousel-caption">
             
             <h3>Библиотека им. В. Маяковского</h3>
@@ -778,7 +778,7 @@ function sliderbar() {
           </div>
         </div>
         <div class="carousel-item">
-          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide3.jpg" class="w-100 sliderimage" alt="2">
+          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide3.jpg" class="w-100 sliderimage" alt="2" ismap>
           <div class="carousel-caption">
             
             <h3>Библиотека им. К. Симонова</h3>
@@ -786,7 +786,7 @@ function sliderbar() {
           </div>
         </div>
         <div class="carousel-item">
-          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide4.jpg" class="w-100 sliderimage" alt="3">
+          <img src="http://novopolotsk-lib.by/images/upload_slides/Slide4.jpg" class="w-100 sliderimage" alt="3" ismap>
           <div class="carousel-caption">
             
             <h3>Библиотека им. Я. Коласа</h3>
