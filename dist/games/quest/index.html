@@ -11,7 +11,7 @@
             overflow: hidden;
             touch-action: manipulation;
             font-family: 'Comic Sans MS', cursive, Arial, sans-serif;
-            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #fad0c4 100%);
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -208,9 +208,9 @@
     <script>
         // Конфигурация игры
         const config = {
-            items: ['🎁', '🎄', '🎅', '🌟', '🔔', '⛄', '🦌', '🍪'],
+            items: ['🎁', '💀', '🤡', '🌟', '👁️', '💙', '🩲', '🌝'],
             initialSequenceLength: 2,
-            maxLevel: 5,
+            maxLevel: 3,
             showTime: 1000,
             hideTime: 500,
             levelUpStep: 1,
@@ -406,15 +406,18 @@
             state.isGameOver = true;
             
             if (isWin) {
-                messageTitleEl.textContent = 'Поздравляем!';
-                messageTextEl.textContent = `Вы успешно прошли все ${config.maxLevel} уровней! 🎉`;
+                messageTitleEl.textContent = '🧐 А теперь подумай';
+                messageTextEl.textContent = `тут загадка`;
+                restartBtn.style.display = 'none';
+                restartBtn.textContent = ``;
             } else {
-                messageTitleEl.textContent = 'Ошибка!';
-                messageTextEl.textContent = `Правильная последовательность не соблюдена. Попробуйте ещё раз!`;
+                messageTitleEl.textContent = 'Упс!';
+                messageTextEl.textContent = `Не та картинка. Попробуй ещё!`;
             }
             
             messageEl.style.display = 'block';
         }
+
         
         // Обработчик кнопки рестарта
         restartBtn.addEventListener('click', initGame);
