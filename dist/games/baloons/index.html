@@ -25,6 +25,7 @@
             width: 100%;
             height: 80vh;
             overflow: hidden;
+            touch-action: none;
         }
         
         .balloon {
@@ -35,16 +36,8 @@
             -webkit-tap-highlight-color: transparent;
             box-shadow: inset -5px -5px 10px rgba(0, 0, 0, 0.2);
             transition: transform 0.1s;
+            will-change: transform;
         }
-        .balloon::after {
-    content: '';
-    position: absolute;
-    top: -10px;
-    left: -10px;
-    right: -10px;
-    bottom: -10px;
-    /* Невидимая область, но кликабельная */
-}
         
         .balloon:active {
             transform: scale(0.9);
@@ -60,7 +53,7 @@
             font-weight: bold;
         }
         
-        #timer, #score {
+        #timer, #target-count {
             color: #333;
         }
         
@@ -126,7 +119,6 @@
         <div>Время: <span id="timer">30</span>с</div>
         <div>Цель: <span id="target-count">10</span> шариков</div>
         <div>Цвет: <span id="target-color">🔴</span></div>
-        <div>Счёт: <span id="score">0</span></div>
     </div>
     <div id="game-container"></div>
     <div id="message">
@@ -138,11 +130,11 @@
     <script>
         // Конфигурация игры
         const config = {
-            totalBalloons: 20,       // Всего шариков на экране
-            targetCount: 10,         // Сколько нужно лопнуть
-            gameTime: 10,            // Время игры в секундах
-            balloonColors: ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6'], // Цвета шариков
-            balloonSizes: [40, 50, 60] // Размеры шариков в пикселях
+            totalBalloons: 60,
+            targetCount: 10,
+            gameTime: 30,
+            balloonColors: ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6'],
+            balloonSizes: [40, 50, 60]
         };
         
         // Состояние игры
@@ -159,7 +151,6 @@
         // Элементы DOM
         const gameContainer = document.getElementById('game-container');
         const timerEl = document.getElementById('timer');
-        const scoreEl = document.getElementById('score');
         const targetCountEl = document.getElementById('target-count');
         const targetColorEl = document.getElementById('target-color');
         const messageEl = document.getElementById('message');
@@ -169,37 +160,27 @@
         
         // Инициализация игры
         function initGame() {
-            // Сброс состояния
             state.score = 0;
             state.timeLeft = config.gameTime;
             state.isGameOver = false;
             state.balloons = [];
             
-            // Очистка контейнера
             gameContainer.innerHTML = '';
             
-            // Установка цели
-            targetCountEl.textContent = config.targetCount;
-            state.targetColor = '#e74c3c';
+            state.targetColor = '#e74c3c'; // Фиксированный красный цвет
             targetColorEl.style.backgroundColor = state.targetColor;
+            targetCountEl.textContent = config.targetCount;
+            timerEl.textContent = state.timeLeft;
             
-            // Обновление UI
-            updateUI();
-            
-            // Создание шариков
-            createBalloons();
-            
-            // Запуск таймера
             if (state.timerInterval) clearInterval(state.timerInterval);
             state.timerInterval = setInterval(updateTimer, 1000);
             
-            // Скрыть сообщение
             messageEl.style.display = 'none';
+            createBalloons();
         }
         
         // Создание шариков
         function createBalloons() {
-            // Удаляем старые шарики
             state.balloons.forEach(balloon => {
                 if (balloon.element && balloon.element.parentNode) {
                     balloon.element.remove();
@@ -207,7 +188,6 @@
             });
             state.balloons = [];
             
-            // Создаем новые шарики
             for (let i = 0; i < config.totalBalloons; i++) {
                 createBalloon();
             }
@@ -218,25 +198,21 @@
             const balloon = document.createElement('div');
             balloon.className = 'balloon';
             
-            // Случайные свойства
             const color = config.balloonColors[Math.floor(Math.random() * config.balloonColors.length)];
             const size = config.balloonSizes[Math.floor(Math.random() * config.balloonSizes.length)];
             const x = Math.random() * (gameContainer.offsetWidth - size);
             const y = gameContainer.offsetHeight + size;
-            const speed = 8 + Math.random() * 13;
-            const angle = Math.random() * 0.4 - 0.2; // Небольшой угол для движения в сторону
+            const speed = 8 + Math.random() * 10;
+            const angle = Math.random() * 0.2 - 0.1;
             
-            // Применяем стили
             balloon.style.width = `${size}px`;
             balloon.style.height = `${size}px`;
             balloon.style.left = `${x}px`;
             balloon.style.top = `${y}px`;
             balloon.style.backgroundColor = color;
             
-            // Добавляем в DOM
             gameContainer.appendChild(balloon);
             
-            // Сохраняем данные шарика
             const balloonData = {
                 element: balloon,
                 color: color,
@@ -249,8 +225,33 @@
             
             state.balloons.push(balloonData);
             
-            // Обработчик клика
-            balloon.addEventListener('click', () => handleBalloonClick(balloonData));
+            // Новые обработчики для точного определения касаний
+            balloon.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0] || e.changedTouches[0];
+                const rect = this.getBoundingClientRect();
+                
+                const distance = Math.sqrt(
+                    Math.pow(touch.clientX - (rect.left + rect.width/2), 2) +
+                    Math.pow(touch.clientY - (rect.top + rect.height/2), 2)
+                );
+                
+                if (distance <= rect.width/2) {
+                    handleBalloonClick(balloonData);
+                }
+            }, { passive: false });
+
+            balloon.addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - (rect.left + rect.width/2), 2) +
+                    Math.pow(e.clientY - (rect.top + rect.height/2), 2)
+                );
+                
+                if (distance <= rect.width/2) {
+                    handleBalloonClick(balloonData);
+                }
+            });
         }
         
         // Обработка клика по шарику
@@ -258,24 +259,19 @@
             if (state.isGameOver) return;
             
             if (balloon.color === state.targetColor) {
-                // Правильный шарик
                 state.score++;
-                updateUI();
                 
-                // Анимация лопания
                 balloon.element.style.transform = 'scale(1.5)';
                 balloon.element.style.opacity = '0';
                 setTimeout(() => {
                     balloon.element.remove();
-                    createBalloon(); // Создаем новый шарик вместо лопнутого
+                    createBalloon();
                 }, 200);
                 
-                // Проверка победы
                 if (state.score >= config.targetCount) {
                     endGame(true);
                 }
             } else {
-                // Неправильный шарик - проигрыш
                 endGame(false);
             }
         }
@@ -290,23 +286,16 @@
             }
         }
         
-        // Обновление UI
-        function updateUI() {
-            scoreEl.textContent = state.score;
-        }
-        
         // Завершение игры
         function endGame(isWin) {
             state.isGameOver = true;
             clearInterval(state.timerInterval);
             
-            // Остановка всех шариков
             state.balloons.forEach(balloon => {
                 balloon.speed = 0;
                 balloon.angle = 0;
             });
             
-            // Показ сообщения
             if (isWin) {
                 messageTitleEl.textContent = 'Поздравляем!';
                 messageTextEl.textContent = `Вы успешно собрали ${config.targetCount} шариков! С Днём Рождения! 🎉`;
@@ -324,7 +313,7 @@
             messageEl.style.display = 'block';
         }
         
-        // Создание конфетти для победы
+        // Создание конфетти
         function createConfetti() {
             for (let i = 0; i < 100; i++) {
                 const confetti = document.createElement('div');
@@ -344,19 +333,16 @@
                 balloon.y -= balloon.speed;
                 balloon.x += balloon.angle;
                 
-                // Если шарик улетел за верхнюю границу, создаем новый внизу
                 if (balloon.y < -balloon.size) {
                     balloon.element.remove();
                     createBalloon();
                     return;
                 }
                 
-                // Если шарик улетел за боковые границы, меняем направление
                 if (balloon.x < -balloon.size || balloon.x > gameContainer.offsetWidth) {
                     balloon.angle = -balloon.angle;
                 }
                 
-                // Обновляем позицию
                 balloon.element.style.top = `${balloon.y}px`;
                 balloon.element.style.left = `${balloon.x}px`;
             });
@@ -372,21 +358,14 @@
             requestAnimationFrame(updateBalloons);
         });
         
-        // Запуск игры при загрузке
-        window.addEventListener('load', () => {
+        // Запуск игры
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.style.margin = '0';
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+            
             initGame();
             requestAnimationFrame(updateBalloons);
-        });
-        
-        // Обработчик изменения размера окна
-        window.addEventListener('resize', () => {
-            // При изменении размера пересчитываем позиции шариков
-            state.balloons.forEach(balloon => {
-                if (balloon.element.parentNode) {
-                    balloon.x = Math.min(balloon.x, gameContainer.offsetWidth - balloon.size);
-                    balloon.element.style.left = `${balloon.x}px`;
-                }
-            });
         });
     </script>
 </body>
