@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Собери шарики!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            overflow: hidden;
+        }
+        
+        .balloon {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: inset -5px -5px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s;
+        }
+        
+        .balloon:active {
+            transform: scale(0.9);
+        }
+        
+        #info-panel {
+            width: 100%;
+            padding: 10px 0;
+            background: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: space-around;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        #timer, #score {
+            color: #333;
+        }
+        
+        #target-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+        
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            display: none;
+            max-width: 80%;
+        }
+        
+        #message h2 {
+            margin-top: 0;
+            color: #d35400;
+        }
+        
+        #message p {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        #restart-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        #restart-btn:hover {
+            background: #2ecc71;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
+            z-index: 10;
+            animation: confetti 3s ease-in-out forwards;
+        }
+        
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Собери шарики!</h1>
+    <div id="info-panel">
+        <div>Время: <span id="timer">30</span>с</div>
+        <div>Цель: <span id="target-count">10</span> шариков</div>
+        <div>Цвет: <span id="target-color"></span></div>
+        <div>Счёт: <span id="score">0</span></div>
+    </div>
+    <div id="game-container"></div>
+    <div id="message">
+        <h2 id="message-title">Поздравляем!</h2>
+        <p id="message-text">Вы успешно собрали все шарики!</p>
+        <button id="restart-btn">Играть снова</button>
+    </div>
+
+    <script>
+        // Конфигурация игры
+        const config = {
+            totalBalloons: 20,       // Всего шариков на экране
+            targetCount: 10,         // Сколько нужно лопнуть
+            gameTime: 10,            // Время игры в секундах
+            balloonColors: ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6'], // Цвета шариков
+            balloonSizes: [40, 50, 60] // Размеры шариков в пикселях
+        };
+        
+        // Состояние игры
+        let state = {
+            score: 0,
+            timeLeft: config.gameTime,
+            targetColor: '',
+            balloons: [],
+            gameInterval: null,
+            timerInterval: null,
+            isGameOver: false
+        };
+        
+        // Элементы DOM
+        const gameContainer = document.getElementById('game-container');
+        const timerEl = document.getElementById('timer');
+        const scoreEl = document.getElementById('score');
+        const targetCountEl = document.getElementById('target-count');
+        const targetColorEl = document.getElementById('target-color');
+        const messageEl = document.getElementById('message');
+        const messageTitleEl = document.getElementById('message-title');
+        const messageTextEl = document.getElementById('message-text');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        // Инициализация игры
+        function initGame() {
+            // Сброс состояния
+            state.score = 0;
+            state.timeLeft = config.gameTime;
+            state.isGameOver = false;
+            state.balloons = [];
+            
+            // Очистка контейнера
+            gameContainer.innerHTML = '';
+            
+            // Установка цели
+            targetCountEl.textContent = config.targetCount;
+            state.targetColor = '#e74c3c';
+            targetColorEl.style.backgroundColor = state.targetColor;
+            
+            // Обновление UI
+            updateUI();
+            
+            // Создание шариков
+            createBalloons();
+            
+            // Запуск таймера
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(updateTimer, 1000);
+            
+            // Скрыть сообщение
+            messageEl.style.display = 'none';
+        }
+        
+        // Создание шариков
+        function createBalloons() {
+            // Удаляем старые шарики
+            state.balloons.forEach(balloon => {
+                if (balloon.element && balloon.element.parentNode) {
+                    balloon.element.remove();
+                }
+            });
+            state.balloons = [];
+            
+            // Создаем новые шарики
+            for (let i = 0; i < config.totalBalloons; i++) {
+                createBalloon();
+            }
+        }
+        
+        // Создание одного шарика
+        function createBalloon() {
+            const balloon = document.createElement('div');
+            balloon.className = 'balloon';
+            
+            // Случайные свойства
+            const color = config.balloonColors[Math.floor(Math.random() * config.balloonColors.length)];
+            const size = config.balloonSizes[Math.floor(Math.random() * config.balloonSizes.length)];
+            const x = Math.random() * (gameContainer.offsetWidth - size);
+            const y = gameContainer.offsetHeight + size;
+            const speed = 8 + Math.random() * 13;
+            const angle = Math.random() * 0.4 - 0.2; // Небольшой угол для движения в сторону
+            
+            // Применяем стили
+            balloon.style.width = `${size}px`;
+            balloon.style.height = `${size}px`;
+            balloon.style.left = `${x}px`;
+            balloon.style.top = `${y}px`;
+            balloon.style.backgroundColor = color;
+            
+            // Добавляем в DOM
+            gameContainer.appendChild(balloon);
+            
+            // Сохраняем данные шарика
+            const balloonData = {
+                element: balloon,
+                color: color,
+                x: x,
+                y: y,
+                speed: speed,
+                angle: angle,
+                size: size
+            };
+            
+            state.balloons.push(balloonData);
+            
+            // Обработчик клика
+            balloon.addEventListener('click', () => handleBalloonClick(balloonData));
+        }
+        
+        // Обработка клика по шарику
+        function handleBalloonClick(balloon) {
+            if (state.isGameOver) return;
+            
+            if (balloon.color === state.targetColor) {
+                // Правильный шарик
+                state.score++;
+                updateUI();
+                
+                // Анимация лопания
+                balloon.element.style.transform = 'scale(1.5)';
+                balloon.element.style.opacity = '0';
+                setTimeout(() => {
+                    balloon.element.remove();
+                    createBalloon(); // Создаем новый шарик вместо лопнутого
+                }, 200);
+                
+                // Проверка победы
+                if (state.score >= config.targetCount) {
+                    endGame(true);
+                }
+            } else {
+                // Неправильный шарик - проигрыш
+                endGame(false);
+            }
+        }
+        
+        // Обновление таймера
+        function updateTimer() {
+            state.timeLeft--;
+            timerEl.textContent = state.timeLeft;
+            
+            if (state.timeLeft <= 0) {
+                endGame(false);
+            }
+        }
+        
+        // Обновление UI
+        function updateUI() {
+            scoreEl.textContent = state.score;
+        }
+        
+        // Завершение игры
+        function endGame(isWin) {
+            state.isGameOver = true;
+            clearInterval(state.timerInterval);
+            
+            // Остановка всех шариков
+            state.balloons.forEach(balloon => {
+                balloon.speed = 0;
+                balloon.angle = 0;
+            });
+            
+            // Показ сообщения
+            if (isWin) {
+                messageTitleEl.textContent = 'Поздравляем!';
+                messageTextEl.textContent = `Вы успешно собрали ${config.targetCount} шариков! С Днём Рождения! 🎉`;
+                createConfetti();
+            } else {
+                if (state.timeLeft <= 0) {
+                    messageTitleEl.textContent = 'Время вышло!';
+                    messageTextEl.textContent = 'К сожалению, вы не успели собрать нужное количество шариков. Попробуйте ещё раз!';
+                } else {
+                    messageTitleEl.textContent = 'Ошибка!';
+                    messageTextEl.textContent = 'Вы лопнули шарик не того цвета! Попробуйте ещё раз!';
+                }
+            }
+            
+            messageEl.style.display = 'block';
+        }
+        
+        // Создание конфетти для победы
+        function createConfetti() {
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.backgroundColor = config.balloonColors[Math.floor(Math.random() * config.balloonColors.length)];
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                gameContainer.appendChild(confetti);
+            }
+        }
+        
+        // Анимация шариков
+        function updateBalloons() {
+            state.balloons.forEach(balloon => {
+                if (!balloon.element.parentNode) return;
+                
+                balloon.y -= balloon.speed;
+                balloon.x += balloon.angle;
+                
+                // Если шарик улетел за верхнюю границу, создаем новый внизу
+                if (balloon.y < -balloon.size) {
+                    balloon.element.remove();
+                    createBalloon();
+                    return;
+                }
+                
+                // Если шарик улетел за боковые границы, меняем направление
+                if (balloon.x < -balloon.size || balloon.x > gameContainer.offsetWidth) {
+                    balloon.angle = -balloon.angle;
+                }
+                
+                // Обновляем позицию
+                balloon.element.style.top = `${balloon.y}px`;
+                balloon.element.style.left = `${balloon.x}px`;
+            });
+            
+            if (!state.isGameOver) {
+                requestAnimationFrame(updateBalloons);
+            }
+        }
+        
+        // Обработчик кнопки рестарта
+        restartBtn.addEventListener('click', () => {
+            initGame();
+            requestAnimationFrame(updateBalloons);
+        });
+        
+        // Запуск игры при загрузке
+        window.addEventListener('load', () => {
+            initGame();
+            requestAnimationFrame(updateBalloons);
+        });
+        
+        // Обработчик изменения размера окна
+        window.addEventListener('resize', () => {
+            // При изменении размера пересчитываем позиции шариков
+            state.balloons.forEach(balloon => {
+                if (balloon.element.parentNode) {
+                    balloon.x = Math.min(balloon.x, gameContainer.offsetWidth - balloon.size);
+                    balloon.element.style.left = `${balloon.x}px`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
