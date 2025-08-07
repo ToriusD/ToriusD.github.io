@@ -11,7 +11,7 @@
             overflow: hidden;
             touch-action: manipulation;
             font-family: 'Comic Sans MS', cursive, Arial, sans-serif;
-            background: linear-gradient(135deg, #ffffff 0%, #fad0c4 100%);
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -22,38 +22,42 @@
         
         #game-container {
             position: relative;
-            width: 90%;
+            width: 95%;
             max-width: 500px;
-            height: 60vh;
+            height: 65vh;
+            max-height: 500px;
             background: rgba(255, 255, 255, 0.3);
             border-radius: 20px;
-            padding: 20px;
+            padding: 10px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-wrap: wrap;
             justify-content: space-around;
             align-content: space-around;
+            gap: 8px;
         }
         
         .item {
             width: 22%;
+            min-width: 60px;
             aspect-ratio: 1/1;
-            margin: 5px;
             background: white;
             border-radius: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 30px;
+            font-size: 2.5rem;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            border: none;
+            outline: none;
         }
         
-        .item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        .item:active {
+            transform: scale(0.95);
         }
         
         .item.active {
@@ -63,14 +67,15 @@
         }
         
         #info-panel {
-            width: 100%;
-            padding: 15px 0;
+            width: 95%;
+            max-width: 500px;
+            padding: 12px 0;
             background: rgba(255, 255, 255, 0.7);
             display: flex;
             justify-content: center;
-            font-size: 18px;
+            font-size: 1.1rem;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
@@ -86,26 +91,28 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(255, 255, 255, 0.95);
-            padding: 30px;
+            padding: 25px;
             border-radius: 20px;
             text-align: center;
             z-index: 100;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             border: 3px solid #ff6b6b;
-            max-width: 80%;
+            width: 85%;
+            max-width: 400px;
         }
         
         #message h2 {
             color: #ff6b6b;
-            font-size: 2rem;
-            margin: 0 0 15px 0;
+            font-size: 1.8rem;
+            margin: 0 0 12px 0;
             text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
         }
         
         #message p {
             color: #555;
-            font-size: 1.2rem;
-            margin: 0 0 20px 0;
+            font-size: 1.1rem;
+            margin: 0 0 18px 0;
+            line-height: 1.4;
         }
         
         #restart-btn {
@@ -119,12 +126,12 @@
             transition: all 0.3s;
             font-family: 'Comic Sans MS', cursive;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            -webkit-tap-highlight-color: transparent;
         }
         
-        #restart-btn:hover {
+        #restart-btn:active {
+            transform: scale(0.95);
             background: #ff8e8e;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         }
         
         @keyframes pulse {
@@ -142,12 +149,27 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 5rem;
+            font-size: 4.5rem;
             font-weight: bold;
             color: #ff6b6b;
             text-shadow: 3px 3px 0 rgba(255, 255, 255, 0.5);
             z-index: 200;
             display: none;
+        }
+
+        @media (max-height: 700px) {
+            #game-container {
+                height: 60vh;
+            }
+            .item {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-height: 600px) {
+            #game-container {
+                height: 55vh;
+            }
         }
     </style>
 </head>
@@ -158,9 +180,9 @@
     </div>
     <div id="game-container"></div>
     <div id="message">
-        <h2 id="message-title"></h2>
-        <p id="message-text"></p>
-        <button id="restart-btn"></button>
+        <h2 id="message-title">🧐 А теперь подумай</h2>
+        <p id="message-text">тут загадка</p>
+        <button id="restart-btn">Играть снова</button>
     </div>
     <div id="countdown">3</div>
 
@@ -239,11 +261,12 @@
             const selectedItems = shuffledItems.slice(0, 8);
             
             selectedItems.forEach((item, index) => {
-                const itemEl = document.createElement('div');
+                const itemEl = document.createElement('button'); // Изменено на button
                 itemEl.className = 'item';
                 itemEl.textContent = item;
                 itemEl.dataset.index = index;
                 itemEl.addEventListener('click', handleItemClick);
+                itemEl.addEventListener('touchstart', handleItemClick, { passive: true });
                 gameContainer.appendChild(itemEl);
             });
         }
@@ -288,11 +311,13 @@
         function handleItemClick(e) {
             if (state.isShowing || state.isGameOver) return;
             
-            const itemIndex = parseInt(e.target.dataset.index);
-            e.target.classList.add('active', 'pulse');
+            const item = e.currentTarget;
+            const itemIndex = parseInt(item.dataset.index);
+            
+            item.classList.add('active', 'pulse');
             
             setTimeout(() => {
-                e.target.classList.remove('active', 'pulse');
+                item.classList.remove('pulse');
             }, 300);
             
             state.playerSequence.push(itemIndex);
