@@ -36,6 +36,15 @@
             box-shadow: inset -5px -5px 10px rgba(0, 0, 0, 0.2);
             transition: transform 0.1s;
         }
+        .balloon::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    /* Невидимая область, но кликабельная */
+}
         
         .balloon:active {
             transform: scale(0.9);
@@ -55,12 +64,6 @@
             color: #333;
         }
         
-        #target-color {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 2px solid #333;
-        }
         
         #message {
             position: absolute;
@@ -122,7 +125,7 @@
     <div id="info-panel">
         <div>Время: <span id="timer">30</span>с</div>
         <div>Цель: <span id="target-count">10</span> шариков</div>
-        <div>Цвет: <span id="target-color"></span></div>
+        <div>Цвет: <span id="target-color">🔴</span></div>
         <div>Счёт: <span id="score">0</span></div>
     </div>
     <div id="game-container"></div>
