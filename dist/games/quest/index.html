@@ -54,6 +54,7 @@
             -webkit-tap-highlight-color: transparent;
             border: none;
             outline: none;
+            touch-action: manipulation;
         }
         
         .item:active {
@@ -156,7 +157,7 @@
         
         #countdown {
             position: fixed;
-            top: 50%;
+            top: 20%;
             left: 50%;
             transform: translate(-50%, -50%);
             font-size: 4.5rem;
@@ -174,11 +175,19 @@
             .item {
                 font-size: 2rem;
             }
+            #countdown {
+                top: 15%;
+                font-size: 3.5rem;
+            }
         }
 
         @media (max-height: 600px) {
             #game-container {
                 height: 55vh;
+            }
+            #countdown {
+                top: 12%;
+                font-size: 3rem;
             }
         }
     </style>
@@ -205,7 +214,8 @@
             showTime: 1000,
             hideTime: 500,
             levelUpStep: 1,
-            countdownTime: 3
+            countdownTime: 3,
+            tapDelay: 300 // Задержка для обработки тапа на мобильных
         };
         
         // Состояние игры
@@ -215,7 +225,8 @@
             playerSequence: [],
             isShowing: false,
             isGameOver: false,
-            currentStep: 0
+            currentStep: 0,
+            tapInProgress: false
         };
         
         // Элементы DOM
@@ -254,6 +265,7 @@
             state.level = 1;
             state.isGameOver = false;
             state.currentStep = 0;
+            state.tapInProgress = false;
             
             levelEl.textContent = state.level;
             messageEl.style.display = 'none';
@@ -277,8 +289,31 @@
                 itemEl.className = 'item';
                 itemEl.textContent = item;
                 itemEl.dataset.index = index;
-                itemEl.addEventListener('click', () => handleItemClick(index));
-                itemEl.addEventListener('touchstart', () => handleItemClick(index), { passive: true });
+                
+                // Обработчики для мобильных и десктопов
+                itemEl.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (state.tapInProgress) return;
+                    state.tapInProgress = true;
+                    handleItemClick(index);
+                }, { passive: false });
+                
+                itemEl.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    setTimeout(() => {
+                        state.tapInProgress = false;
+                    }, config.tapDelay);
+                }, { passive: false });
+                
+                itemEl.addEventListener('click', () => {
+                    if (state.tapInProgress) return;
+                    state.tapInProgress = true;
+                    handleItemClick(index);
+                    setTimeout(() => {
+                        state.tapInProgress = false;
+                    }, config.tapDelay);
+                });
+                
                 gameContainer.appendChild(itemEl);
             });
         }
@@ -322,7 +357,7 @@
         
         // Обработка клика по предмету
         function handleItemClick(clickedIndex) {
-            if (state.isShowing || state.isGameOver) return;
+            if (state.isShowing || state.isGameOver || state.tapInProgress) return;
             
             const items = document.querySelectorAll('.item');
             const clickedItem = items[clickedIndex];
@@ -352,7 +387,7 @@
                         // Сбрасываем стили перед новым раундом
                         setTimeout(() => {
                             items.forEach(item => {
-                                item.classList.remove('correct', 'wrong');
+                                item.classList.remove('correct', 'wrong', 'pulse');
                             });
                             startCountdown(() => {
                                 startRound();
