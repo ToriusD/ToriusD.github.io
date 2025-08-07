@@ -256,7 +256,7 @@
             
             function move() {
                 // Движение вверх
-                const newY = parseInt(balloon.style.top) - speed;
+                const newY = parseInt(balloon.style.top) + speed;
                 balloon.style.top = `${newY}px`;
                 
                 // Раскачивание
