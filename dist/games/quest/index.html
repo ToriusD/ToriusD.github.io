@@ -214,8 +214,7 @@
             showTime: 1000,
             hideTime: 500,
             levelUpStep: 1,
-            countdownTime: 3,
-            tapDelay: 300 // Задержка для обработки тапа на мобильных
+            countdownTime: 3
         };
         
         // Состояние игры
@@ -226,7 +225,7 @@
             isShowing: false,
             isGameOver: false,
             currentStep: 0,
-            tapInProgress: false
+            tapLock: false
         };
         
         // Элементы DOM
@@ -265,7 +264,7 @@
             state.level = 1;
             state.isGameOver = false;
             state.currentStep = 0;
-            state.tapInProgress = false;
+            state.tapLock = false;
             
             levelEl.textContent = state.level;
             messageEl.style.display = 'none';
@@ -290,28 +289,17 @@
                 itemEl.textContent = item;
                 itemEl.dataset.index = index;
                 
-                // Обработчики для мобильных и десктопов
-                itemEl.addEventListener('touchstart', (e) => {
+                // Универсальный обработчик для всех устройств
+                itemEl.addEventListener('pointerdown', (e) => {
                     e.preventDefault();
-                    if (state.tapInProgress) return;
-                    state.tapInProgress = true;
+                    if (state.tapLock || state.isShowing || state.isGameOver) return;
+                    state.tapLock = true;
                     handleItemClick(index);
-                }, { passive: false });
-                
-                itemEl.addEventListener('touchend', (e) => {
-                    e.preventDefault();
+                    
+                    // Снимаем блокировку через короткое время
                     setTimeout(() => {
-                        state.tapInProgress = false;
-                    }, config.tapDelay);
-                }, { passive: false });
-                
-                itemEl.addEventListener('click', () => {
-                    if (state.tapInProgress) return;
-                    state.tapInProgress = true;
-                    handleItemClick(index);
-                    setTimeout(() => {
-                        state.tapInProgress = false;
-                    }, config.tapDelay);
+                        state.tapLock = false;
+                    }, 300);
                 });
                 
                 gameContainer.appendChild(itemEl);
@@ -357,7 +345,7 @@
         
         // Обработка клика по предмету
         function handleItemClick(clickedIndex) {
-            if (state.isShowing || state.isGameOver || state.tapInProgress) return;
+            if (state.isShowing || state.isGameOver) return;
             
             const items = document.querySelectorAll('.item');
             const clickedItem = items[clickedIndex];
@@ -418,13 +406,11 @@
             state.isGameOver = true;
             
             if (isWin) {
-                messageTitleEl.textContent = '🧐 А теперь подумай';
-                messageTextEl.textContent = `тут загадка`;
-                restartBtn.style.display = `none`;
+                messageTitleEl.textContent = 'Поздравляем!';
+                messageTextEl.textContent = `Вы успешно прошли все ${config.maxLevel} уровней! 🎉`;
             } else {
-                messageTitleEl.textContent = 'Упс!';
-                messageTextEl.textContent = `Ничего страшного, попробуй ещё!`;
-                restartBtn.textContent = `Играть снова`;
+                messageTitleEl.textContent = 'Ошибка!';
+                messageTextEl.textContent = `Правильная последовательность не соблюдена. Попробуйте ещё раз!`;
             }
             
             messageEl.style.display = 'block';
