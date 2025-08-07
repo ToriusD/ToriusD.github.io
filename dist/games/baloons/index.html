@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Собери шарики!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+            font-family: 'Comic Sans MS', cursive, Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+        
+        .balloon {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: inset -5px -5px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s;
+            will-change: transform;
+        }
+        
+        .balloon:active {
+            transform: scale(0.9);
+        }
+        
+        #info-panel {
+            width: 100%;
+            padding: 10px 0;
+            background: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: space-around;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        #timer, #target-count {
+            color: #333;
+        }
+        
+        
+        #message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 3px solid #ff6b6b;
+            max-width: 80%;
+        }
+        
+        #message h2 {
+            color: #ff6b6b;
+            font-size: 2.5rem;
+            margin: 0 0 15px 0;
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        #message p {
+            color: #555;
+            font-size: 1.5rem;
+            margin: 0 0 20px 0;
+        }
+        
+        #restart-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Comic Sans MS', cursive;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        #restart-btn:hover {
+            background: #ff8e8e;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
+            z-index: 10;
+            animation: confetti 3s ease-in-out forwards;
+        }
+        
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Лови шарики!</h1>
+    <div id="info-panel">
+        <div>Время: <span id="timer">30</span>с</div>
+        <div>Цель: <span id="target-count">10</span> шариков</div>
+        <div>Цвет: <span id="target-color">🔴</span></div>
+    </div>
+    <div id="game-container"></div>
+    <div id="message">
+        <h2 id="message-title"></h2>
+        <p id="message-text"></p>
+        <button id="restart-btn"></button>
+    </div>
+
+    <script>
+        // Конфигурация игры
+        const config = {
+            totalBalloons: 60,
+            targetCount: 10,
+            gameTime: 15,
+            balloonColors: ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6'],
+            balloonSizes: [60, 70, 80]
+        };
+        
+        // Состояние игры
+        let state = {
+            score: 0,
+            timeLeft: config.gameTime,
+            targetColor: '',
+            balloons: [],
+            gameInterval: null,
+            timerInterval: null,
+            isGameOver: false
+        };
+        
+        // Элементы DOM
+        const gameContainer = document.getElementById('game-container');
+        const timerEl = document.getElementById('timer');
+        const targetCountEl = document.getElementById('target-count');
+        const targetColorEl = document.getElementById('target-color');
+        const messageEl = document.getElementById('message');
+        const messageTitleEl = document.getElementById('message-title');
+        const messageTextEl = document.getElementById('message-text');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        // Инициализация игры
+        function initGame() {
+            state.score = 0;
+            state.timeLeft = config.gameTime;
+            state.isGameOver = false;
+            state.balloons = [];
+            
+            gameContainer.innerHTML = '';
+            
+            state.targetColor = '#e74c3c'; // Фиксированный красный цвет
+            targetColorEl.style.backgroundColor = state.targetColor;
+            targetCountEl.textContent = config.targetCount;
+            timerEl.textContent = state.timeLeft;
+            
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(updateTimer, 1000);
+            
+            messageEl.style.display = 'none';
+            createBalloons();
+        }
+        
+        // Создание шариков
+        function createBalloons() {
+            state.balloons.forEach(balloon => {
+                if (balloon.element && balloon.element.parentNode) {
+                    balloon.element.remove();
+                }
+            });
+            state.balloons = [];
+            
+            for (let i = 0; i < config.totalBalloons; i++) {
+                createBalloon();
+            }
+        }
+        
+        // Создание одного шарика
+        function createBalloon() {
+            const balloon = document.createElement('div');
+            balloon.className = 'balloon';
+    
+            // Новый массив цветов с меньшей вероятностью красного
+            const weightedColors = [
+                '#e74c3c', // красный (1 раз)
+                '#3498db', '#3498db', '#3498db', // синий (3 раза)
+                '#2ecc71', '#2ecc71', '#2ecc71', // зеленый (3 раза)
+                '#f1c40f', '#f1c40f', // желтый (2 раза)
+                '#9b59b6', '#9b59b6'  // фиолетовый (2 раза)
+            ];
+    
+            const color = weightedColors[Math.floor(Math.random() * weightedColors.length)];
+            const size = config.balloonSizes[Math.floor(Math.random() * config.balloonSizes.length)];
+            const x = Math.random() * (gameContainer.offsetWidth - size);
+            const y = gameContainer.offsetHeight + size;
+            // const speed = 6 + Math.random() * 9;
+            const speed = 3 + Math.random() * 5;
+            const angle = Math.random() * 0.2 - 0.1;
+            
+            balloon.style.width = `${size}px`;
+            balloon.style.height = `${size}px`;
+            balloon.style.left = `${x}px`;
+            balloon.style.top = `${y}px`;
+            balloon.style.backgroundColor = color;
+            
+            gameContainer.appendChild(balloon);
+            
+            const balloonData = {
+                element: balloon,
+                color: color,
+                x: x,
+                y: y,
+                speed: speed,
+                angle: angle,
+                size: size
+            };
+            
+            state.balloons.push(balloonData);
+            
+            // Новые обработчики для точного определения касаний
+            balloon.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0] || e.changedTouches[0];
+                const rect = this.getBoundingClientRect();
+                
+                const distance = Math.sqrt(
+                    Math.pow(touch.clientX - (rect.left + rect.width/2), 2) +
+                    Math.pow(touch.clientY - (rect.top + rect.height/2), 2)
+                );
+                
+                if (distance <= rect.width/2) {
+                    handleBalloonClick(balloonData);
+                }
+            }, { passive: false });
+
+            balloon.addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - (rect.left + rect.width/2), 2) +
+                    Math.pow(e.clientY - (rect.top + rect.height/2), 2)
+                );
+                
+                if (distance <= rect.width/2) {
+                    handleBalloonClick(balloonData);
+                }
+            });
+        }
+        
+        // Обработка клика по шарику
+        function handleBalloonClick(balloon) {
+            if (state.isGameOver) return;
+            
+            if (balloon.color === state.targetColor) {
+                state.score++;
+                
+                balloon.element.style.transform = 'scale(1.5)';
+                balloon.element.style.opacity = '0';
+                setTimeout(() => {
+                    balloon.element.remove();
+                    createBalloon();
+                }, 200);
+                
+                if (state.score >= config.targetCount) {
+                    endGame(true);
+                }
+            } else {
+                endGame(false);
+            }
+        }
+        
+        // Обновление таймера
+        function updateTimer() {
+            state.timeLeft--;
+            timerEl.textContent = state.timeLeft;
+            
+            if (state.timeLeft <= 0) {
+                endGame(false);
+            }
+        }
+        
+        // Завершение игры
+        function endGame(isWin) {
+            state.isGameOver = true;
+            clearInterval(state.timerInterval);
+            
+            state.balloons.forEach(balloon => {
+                balloon.speed = 0;
+                balloon.angle = 0;
+            });
+            
+            if (isWin) {
+                messageTitleEl.textContent = '🧐 А теперь подумай';
+                messageTextEl.textContent = `тут загадка`;
+                restartBtn.style.display = 'none';
+                restartBtn.textContent = ``;
+                createConfetti();
+            } else {
+                if (state.timeLeft <= 0) {
+                    messageTitleEl.textContent = 'Упс!';
+                    messageTextEl.textContent = 'Время вышло';
+                    restartBtn.textContent = `Ещё раз`;
+                } else {
+                    messageTitleEl.textContent = 'Упс!';
+                    messageTextEl.textContent = 'Не тот шарик';
+                    restartBtn.textContent = `Ещё раз`;
+                }
+            }
+            
+            messageEl.style.display = 'block';
+        }
+        
+        // Создание конфетти
+        function createConfetti() {
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.backgroundColor = config.balloonColors[Math.floor(Math.random() * config.balloonColors.length)];
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                gameContainer.appendChild(confetti);
+            }
+        }
+        
+        // Анимация шариков
+        function updateBalloons() {
+            state.balloons.forEach(balloon => {
+                if (!balloon.element.parentNode) return;
+                
+                balloon.y -= balloon.speed;
+                balloon.x += balloon.angle;
+                
+                if (balloon.y < -balloon.size) {
+                    balloon.element.remove();
+                    createBalloon();
+                    return;
+                }
+                
+                if (balloon.x < -balloon.size || balloon.x > gameContainer.offsetWidth) {
+                    balloon.angle = -balloon.angle;
+                }
+                
+                balloon.element.style.top = `${balloon.y}px`;
+                balloon.element.style.left = `${balloon.x}px`;
+            });
+            
+            if (!state.isGameOver) {
+                requestAnimationFrame(updateBalloons);
+            }
+        }
+        
+        // Обработчик кнопки рестарта
+        restartBtn.addEventListener('click', () => {
+            initGame();
+            requestAnimationFrame(updateBalloons);
+        });
+        
+        // Запуск игры
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.style.margin = '0';
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+            
+            initGame();
+            requestAnimationFrame(updateBalloons);
+        });
+    </script>
+</body>
+</html>
