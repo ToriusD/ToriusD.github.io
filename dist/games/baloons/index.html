@@ -122,9 +122,9 @@
     </div>
     <div id="game-container"></div>
     <div id="message">
-        <h2 id="message-title">Поздравляем!</h2>
-        <p id="message-text">Вы успешно собрали все шарики!</p>
-        <button id="restart-btn">Играть снова</button>
+        <h2 id="message-title">🧐 А теперь подумай</h2>
+        <p id="message-text">тут загадка</p>
+        <button id="restart-btn"></button>
     </div>
 
     <script>
@@ -132,7 +132,7 @@
         const config = {
             totalBalloons: 60,
             targetCount: 10,
-            gameTime: 30,
+            gameTime: 15,
             balloonColors: ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6'],
             balloonSizes: [40, 50, 60]
         };
@@ -196,14 +196,23 @@
         // Создание одного шарика
         function createBalloon() {
             const balloon = document.createElement('div');
-            balloon.className = 'balloon';
-            
-            const color = config.balloonColors[Math.floor(Math.random() * config.balloonColors.length)];
-            const size = config.balloonSizes[Math.floor(Math.random() * config.balloonSizes.length)];
-            const x = Math.random() * (gameContainer.offsetWidth - size);
-            const y = gameContainer.offsetHeight + size;
-            const speed = 8 + Math.random() * 10;
-            const angle = Math.random() * 0.2 - 0.1;
+    balloon.className = 'balloon';
+    
+    // Новый массив цветов с меньшей вероятностью красного
+    const weightedColors = [
+        '#e74c3c', // красный (1 раз)
+        '#3498db', '#3498db', '#3498db', // синий (3 раза)
+        '#2ecc71', '#2ecc71', '#2ecc71', // зеленый (3 раза)
+        '#f1c40f', '#f1c40f', // желтый (2 раза)
+        '#9b59b6', '#9b59b6'  // фиолетовый (2 раза)
+    ];
+    
+    const color = weightedColors[Math.floor(Math.random() * weightedColors.length)];
+    const size = config.balloonSizes[Math.floor(Math.random() * config.balloonSizes.length)];
+    const x = Math.random() * (gameContainer.offsetWidth - size);
+    const y = gameContainer.offsetHeight + size;
+    const speed = 8 + Math.random() * 10;
+    const angle = Math.random() * 0.2 - 0.1;
             
             balloon.style.width = `${size}px`;
             balloon.style.height = `${size}px`;
