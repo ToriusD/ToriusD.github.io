@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Праздничный квест</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+            font-family: 'Comic Sans MS', cursive, Arial, sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #fad0c4 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 90%;
+            max-width: 500px;
+            height: 60vh;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-content: space-around;
+        }
+        
+        .item {
+            width: 22%;
+            aspect-ratio: 1/1;
+            margin: 5px;
+            background: white;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            user-select: none;
+        }
+        
+        .item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .item.active {
+            background: #ff6b6b;
+            color: white;
+            transform: scale(0.95);
+        }
+        
+        #info-panel {
+            width: 100%;
+            padding: 15px 0;
+            background: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        #level {
+            color: #333;
+        }
+        
+        #message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 3px solid #ff6b6b;
+            max-width: 80%;
+        }
+        
+        #message h2 {
+            color: #ff6b6b;
+            font-size: 2rem;
+            margin: 0 0 15px 0;
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        #message p {
+            color: #555;
+            font-size: 1.2rem;
+            margin: 0 0 20px 0;
+        }
+        
+        #restart-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Comic Sans MS', cursive;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        #restart-btn:hover {
+            background: #ff8e8e;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        #countdown {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 3px 3px 0 rgba(255, 255, 255, 0.5);
+            z-index: 200;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Праздничный квест</h1>
+    <div id="info-panel">
+        <div>Уровень: <span id="level">1</span>/<span id="max-level">5</span></div>
+    </div>
+    <div id="game-container"></div>
+    <div id="message">
+        <h2 id="message-title"></h2>
+        <p id="message-text"></p>
+        <button id="restart-btn"></button>
+    </div>
+    <div id="countdown">3</div>
+
+    <script>
+        // Конфигурация игры
+        const config = {
+            items: ['🎁', '🎄', '🎅', '🌟', '🔔', '⛄', '🦌', '🍪'],
+            initialSequenceLength: 2,
+            maxLevel: 5,
+            showTime: 1000,
+            hideTime: 500,
+            levelUpStep: 1,
+            countdownTime: 3
+        };
+        
+        // Состояние игры
+        let state = {
+            level: 1,
+            sequence: [],
+            playerSequence: [],
+            isShowing: false,
+            isGameOver: false
+        };
+        
+        // Элементы DOM
+        const gameContainer = document.getElementById('game-container');
+        const levelEl = document.getElementById('level');
+        const maxLevelEl = document.getElementById('max-level');
+        const messageEl = document.getElementById('message');
+        const messageTitleEl = document.getElementById('message-title');
+        const messageTextEl = document.getElementById('message-text');
+        const restartBtn = document.getElementById('restart-btn');
+        const countdownEl = document.getElementById('countdown');
+        
+        // Устанавливаем максимальный уровень
+        maxLevelEl.textContent = config.maxLevel;
+        
+        // Функция обратного отсчета
+        function startCountdown(callback) {
+            let count = config.countdownTime;
+            countdownEl.style.display = 'block';
+            countdownEl.textContent = count;
+            
+            const timer = setInterval(() => {
+                count--;
+                countdownEl.textContent = count;
+                
+                if (count <= 0) {
+                    clearInterval(timer);
+                    countdownEl.style.display = 'none';
+                    callback();
+                }
+            }, 1000);
+        }
+        
+        // Инициализация игры
+        function initGame() {
+            state.level = 1;
+            state.isGameOver = false;
+            
+            levelEl.textContent = state.level;
+            messageEl.style.display = 'none';
+            
+            createItems();
+            
+            startCountdown(() => {
+                startRound();
+            });
+        }
+        
+        // Создание игровых элементов
+        function createItems() {
+            gameContainer.innerHTML = '';
+            
+            const shuffledItems = [...config.items].sort(() => 0.5 - Math.random());
+            const selectedItems = shuffledItems.slice(0, 8);
+            
+            selectedItems.forEach((item, index) => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'item';
+                itemEl.textContent = item;
+                itemEl.dataset.index = index;
+                itemEl.addEventListener('click', handleItemClick);
+                gameContainer.appendChild(itemEl);
+            });
+        }
+        
+        // Начало раунда
+        function startRound() {
+            state.sequence = [];
+            state.playerSequence = [];
+            
+            const items = document.querySelectorAll('.item');
+            for (let i = 0; i < config.initialSequenceLength + (state.level - 1) * config.levelUpStep; i++) {
+                const randomIndex = Math.floor(Math.random() * items.length);
+                state.sequence.push(randomIndex);
+            }
+            
+            showSequence(0);
+        }
+        
+        // Показ последовательности
+        function showSequence(index) {
+            if (index >= state.sequence.length) {
+                state.isShowing = false;
+                return;
+            }
+            
+            state.isShowing = true;
+            const itemIndex = state.sequence[index];
+            const item = document.querySelector(`.item[data-index="${itemIndex}"]`);
+            
+            item.classList.add('active', 'pulse');
+            
+            setTimeout(() => {
+                item.classList.remove('active', 'pulse');
+                
+                setTimeout(() => {
+                    showSequence(index + 1);
+                }, config.hideTime);
+            }, config.showTime);
+        }
+        
+        // Обработка клика по предмету
+        function handleItemClick(e) {
+            if (state.isShowing || state.isGameOver) return;
+            
+            const itemIndex = parseInt(e.target.dataset.index);
+            e.target.classList.add('active', 'pulse');
+            
+            setTimeout(() => {
+                e.target.classList.remove('active', 'pulse');
+            }, 300);
+            
+            state.playerSequence.push(itemIndex);
+            
+            if (state.playerSequence[state.playerSequence.length - 1] !== 
+                state.sequence[state.playerSequence.length - 1]) {
+                endGame(false);
+                return;
+            }
+            
+            if (state.playerSequence.length === state.sequence.length) {
+                if (state.level >= config.maxLevel) {
+                    endGame(true);
+                    return;
+                }
+                
+                state.level++;
+                levelEl.textContent = state.level;
+                
+                if (state.level % 3 === 0) {
+                    createItems();
+                }
+                
+                startCountdown(() => {
+                    startRound();
+                });
+            }
+        }
+        
+        // Завершение игры
+        function endGame(isWin) {
+            state.isGameOver = true;
+            
+            if (isWin) {
+                messageTitleEl.textContent = '🧐 А теперь подумай';
+                messageTextEl.textContent = `тут загадка`;
+                restartBtn.style.display = `none`;
+            } else {
+                messageTitleEl.textContent = 'Упс!';
+                messageTextEl.textContent = `Ничего страшного, попробуй ещё!`;
+                restartBtn.textContent = `Играть снова`;
+            }
+            
+            messageEl.style.display = 'block';
+        }
+        
+        // Обработчик кнопки рестарта
+        restartBtn.addEventListener('click', initGame);
+        
+        // Запуск игры
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.style.margin = '0';
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+            
+            initGame();
+        });
+    </script>
+</body>
+</html>
