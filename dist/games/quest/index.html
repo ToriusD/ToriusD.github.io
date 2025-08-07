@@ -66,6 +66,16 @@
             transform: scale(0.95);
         }
         
+        .item.correct {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .item.wrong {
+            background: #e74c3c;
+            color: white;
+        }
+        
         #info-panel {
             width: 95%;
             max-width: 500px;
@@ -204,7 +214,8 @@
             sequence: [],
             playerSequence: [],
             isShowing: false,
-            isGameOver: false
+            isGameOver: false,
+            currentStep: 0
         };
         
         // Элементы DOM
@@ -242,6 +253,7 @@
         function initGame() {
             state.level = 1;
             state.isGameOver = false;
+            state.currentStep = 0;
             
             levelEl.textContent = state.level;
             messageEl.style.display = 'none';
@@ -261,12 +273,12 @@
             const selectedItems = shuffledItems.slice(0, 8);
             
             selectedItems.forEach((item, index) => {
-                const itemEl = document.createElement('button'); // Изменено на button
+                const itemEl = document.createElement('button');
                 itemEl.className = 'item';
                 itemEl.textContent = item;
                 itemEl.dataset.index = index;
-                itemEl.addEventListener('click', handleItemClick);
-                itemEl.addEventListener('touchstart', handleItemClick, { passive: true });
+                itemEl.addEventListener('click', () => handleItemClick(index));
+                itemEl.addEventListener('touchstart', () => handleItemClick(index), { passive: true });
                 gameContainer.appendChild(itemEl);
             });
         }
@@ -275,6 +287,7 @@
         function startRound() {
             state.sequence = [];
             state.playerSequence = [];
+            state.currentStep = 0;
             
             const items = document.querySelectorAll('.item');
             for (let i = 0; i < config.initialSequenceLength + (state.level - 1) * config.levelUpStep; i++) {
@@ -308,43 +321,61 @@
         }
         
         // Обработка клика по предмету
-        function handleItemClick(e) {
+        function handleItemClick(clickedIndex) {
             if (state.isShowing || state.isGameOver) return;
             
-            const item = e.currentTarget;
-            const itemIndex = parseInt(item.dataset.index);
+            const items = document.querySelectorAll('.item');
+            const clickedItem = items[clickedIndex];
             
-            item.classList.add('active', 'pulse');
+            // Подсветка нажатой кнопки
+            clickedItem.classList.add('pulse');
             
-            setTimeout(() => {
-                item.classList.remove('pulse');
-            }, 300);
-            
-            state.playerSequence.push(itemIndex);
-            
-            if (state.playerSequence[state.playerSequence.length - 1] !== 
-                state.sequence[state.playerSequence.length - 1]) {
-                endGame(false);
-                return;
-            }
-            
-            if (state.playerSequence.length === state.sequence.length) {
-                if (state.level >= config.maxLevel) {
-                    endGame(true);
-                    return;
+            // Проверяем, соответствует ли нажатая кнопка текущему шагу последовательности
+            if (clickedIndex === state.sequence[state.currentStep]) {
+                // Правильный выбор
+                clickedItem.classList.add('correct');
+                state.currentStep++;
+                
+                // Проверяем, завершена ли вся последовательность
+                if (state.currentStep === state.sequence.length) {
+                    // Успешно завершили уровень
+                    if (state.level >= config.maxLevel) {
+                        endGame(true);
+                    } else {
+                        state.level++;
+                        levelEl.textContent = state.level;
+                        
+                        if (state.level % 3 === 0) {
+                            createItems();
+                        }
+                        
+                        // Сбрасываем стили перед новым раундом
+                        setTimeout(() => {
+                            items.forEach(item => {
+                                item.classList.remove('correct', 'wrong');
+                            });
+                            startCountdown(() => {
+                                startRound();
+                            });
+                        }, 800);
+                    }
                 }
-                
-                state.level++;
-                levelEl.textContent = state.level;
-                
-                if (state.level % 3 === 0) {
-                    createItems();
-                }
-                
-                startCountdown(() => {
-                    startRound();
+            } else {
+                // Неправильный выбор
+                items.forEach(item => {
+                    const itemIndex = parseInt(item.dataset.index);
+                    if (itemIndex === state.sequence[state.currentStep]) {
+                        item.classList.add('correct'); // Показываем, какой должен был быть правильный выбор
+                    }
                 });
+                clickedItem.classList.add('wrong');
+                setTimeout(() => endGame(false), 800);
             }
+            
+            // Автоматическое снятие подсветки
+            setTimeout(() => {
+                clickedItem.classList.remove('pulse');
+            }, 300);
         }
         
         // Завершение игры
