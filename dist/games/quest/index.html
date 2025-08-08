@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Праздничный квест</title>
+    <style>
+
+        @font-face {
+            font-family: 'TT_Skip-E 85W'; 
+            src: local('TT_Skip-E 85W'),
+                url(Font.ttf); 
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+            font-family: 'TT_Skip-E 85W', cursive, Arial, sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #fad0c4 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 95%;
+            max-width: 500px;
+            height: 65vh;
+            max-height: 500px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-content: space-around;
+            gap: 8px;
+        }
+        
+        .item {
+            width: 22%;
+            min-width: 60px;
+            aspect-ratio: 1/1;
+            background: white;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            border: none;
+            outline: none;
+            touch-action: manipulation;
+        }
+        
+        .item:active {
+            transform: scale(0.95);
+        }
+        
+        .item.active {
+            background: #ff6b6b;
+            color: white;
+            transform: scale(0.95);
+        }
+        
+        .item.correct {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .item.wrong {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        #info-panel {
+            width: 95%;
+            max-width: 500px;
+            padding: 12px 0;
+            background: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        #level {
+            color: #333;
+        }
+        
+        #message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 3px solid #ff6b6b;
+            width: 85%;
+            max-width: 400px;
+        }
+        
+        #message h2 {
+            color: #ff6b6b;
+            font-size: 1.5rem;
+            margin: 0 0 12px 0;
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        #message p {
+            color: #555;
+            font-size: 1rem;
+            margin: 0 0 18px 0;
+            line-height: 1.4;
+            white-space: pre-line;
+        }
+        
+        #restart-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Comic Sans MS', cursive;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #restart-btn:active {
+            transform: scale(0.95);
+            background: #ff8e8e;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        #countdown {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4.5rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 3px 3px 0 rgba(255, 255, 255, 0.5);
+            z-index: 200;
+            display: none;
+        }
+
+        @media (max-height: 700px) {
+            #game-container {
+                height: 60vh;
+            }
+            .item {
+                font-size: 2rem;
+            }
+            #countdown {
+                top: 60%;
+                font-size: 3.5rem;
+            }
+        }
+
+        @media (max-height: 600px) {
+            #game-container {
+                height: 55vh;
+            }
+            #countdown {
+                top: 12%;
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Следи внимательно!</h1>
+    <div id="info-panel">
+        <div>Уровень: <span id="level">1</span>/<span id="max-level">5</span></div>
+    </div>
+    <div id="game-container"></div>
+    <div id="message">
+        <h2 id="message-title">🧐 А теперь подумай</h2>
+        <p id="message-text">тут загадка</p>
+        <button id="restart-btn">Играть снова</button>
+    </div>
+    <div id="countdown">3</div>
+
+    <script>
+        // Конфигурация игры
+        const config = {
+            items: ['🎁', '💀', '🤡', '🌯', '👁️', '👽', '🩲', '🌝'],
+            initialSequenceLength: 2,
+            maxLevel: 5,
+            showTime: 1000,
+            hideTime: 500,
+            levelUpStep: 1,
+            countdownTime: 3
+        };
+        
+        // Состояние игры
+        let state = {
+            level: 1,
+            sequence: [],
+            playerSequence: [],
+            isShowing: false,
+            isGameOver: false,
+            currentStep: 0,
+            tapLock: false
+        };
+        
+        // Элементы DOM
+        const gameContainer = document.getElementById('game-container');
+        const levelEl = document.getElementById('level');
+        const maxLevelEl = document.getElementById('max-level');
+        const messageEl = document.getElementById('message');
+        const messageTitleEl = document.getElementById('message-title');
+        const messageTextEl = document.getElementById('message-text');
+        const restartBtn = document.getElementById('restart-btn');
+        const countdownEl = document.getElementById('countdown');
+        
+        // Устанавливаем максимальный уровень
+        maxLevelEl.textContent = config.maxLevel;
+        
+        // Функция обратного отсчета
+        function startCountdown(callback) {
+            let count = config.countdownTime;
+            countdownEl.style.display = 'block';
+            countdownEl.textContent = count;
+            
+            const timer = setInterval(() => {
+                count--;
+                countdownEl.textContent = count;
+                
+                if (count <= 0) {
+                    clearInterval(timer);
+                    countdownEl.style.display = 'none';
+                    callback();
+                }
+            }, 1000);
+        }
+        
+        // Инициализация игры
+        function initGame() {
+            state.level = 1;
+            state.isGameOver = false;
+            state.currentStep = 0;
+            state.tapLock = false;
+            
+            levelEl.textContent = state.level;
+            messageEl.style.display = 'none';
+            
+            createItems();
+            
+            startCountdown(() => {
+                startRound();
+            });
+        }
+        
+        // Создание игровых элементов
+        function createItems() {
+            gameContainer.innerHTML = '';
+            
+            const shuffledItems = [...config.items].sort(() => 0.5 - Math.random());
+            const selectedItems = shuffledItems.slice(0, 8);
+            
+            selectedItems.forEach((item, index) => {
+                const itemEl = document.createElement('button');
+                itemEl.className = 'item';
+                itemEl.textContent = item;
+                itemEl.dataset.index = index;
+                
+                // Универсальный обработчик для всех устройств
+                itemEl.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    if (state.tapLock || state.isShowing || state.isGameOver) return;
+                    state.tapLock = true;
+                    handleItemClick(index);
+                    
+                    // Снимаем блокировку через короткое время
+                    setTimeout(() => {
+                        state.tapLock = false;
+                    }, 300);
+                });
+                
+                gameContainer.appendChild(itemEl);
+            });
+        }
+        
+        // Начало раунда
+        function startRound() {
+            state.sequence = [];
+            state.playerSequence = [];
+            state.currentStep = 0;
+            
+            const items = document.querySelectorAll('.item');
+            for (let i = 0; i < config.initialSequenceLength + (state.level - 1) * config.levelUpStep; i++) {
+                const randomIndex = Math.floor(Math.random() * items.length);
+                state.sequence.push(randomIndex);
+            }
+            
+            showSequence(0);
+        }
+        
+        // Показ последовательности
+        function showSequence(index) {
+            if (index >= state.sequence.length) {
+                state.isShowing = false;
+                return;
+            }
+            
+            state.isShowing = true;
+            const itemIndex = state.sequence[index];
+            const item = document.querySelector(`.item[data-index="${itemIndex}"]`);
+            
+            item.classList.add('active', 'pulse');
+            
+            setTimeout(() => {
+                item.classList.remove('active', 'pulse');
+                
+                setTimeout(() => {
+                    showSequence(index + 1);
+                }, config.hideTime);
+            }, config.showTime);
+        }
+        
+        // Обработка клика по предмету
+        function handleItemClick(clickedIndex) {
+            if (state.isShowing || state.isGameOver) return;
+            
+            const items = document.querySelectorAll('.item');
+            const clickedItem = items[clickedIndex];
+            
+            // Подсветка нажатой кнопки
+            clickedItem.classList.add('pulse');
+            
+            // Проверяем, соответствует ли нажатая кнопка текущему шагу последовательности
+            if (clickedIndex === state.sequence[state.currentStep]) {
+                // Правильный выбор
+                clickedItem.classList.add('correct');
+                state.currentStep++;
+                
+                // Проверяем, завершена ли вся последовательность
+                if (state.currentStep === state.sequence.length) {
+                    // Успешно завершили уровень
+                    if (state.level >= config.maxLevel) {
+                        endGame(true);
+                    } else {
+                        state.level++;
+                        levelEl.textContent = state.level;
+                        
+                        if (state.level % 3 === 0) {
+                            createItems();
+                        }
+                        
+                        // Сбрасываем стили перед новым раундом
+                        setTimeout(() => {
+                            items.forEach(item => {
+                                item.classList.remove('correct', 'wrong', 'pulse');
+                            });
+                            startCountdown(() => {
+                                startRound();
+                            });
+                        }, 800);
+                    }
+                }
+            } else {
+                // Неправильный выбор
+                items.forEach(item => {
+                    const itemIndex = parseInt(item.dataset.index);
+                    if (itemIndex === state.sequence[state.currentStep]) {
+                        item.classList.add('correct'); // Показываем, какой должен был быть правильный выбор
+                    }
+                });
+                clickedItem.classList.add('wrong');
+                setTimeout(() => endGame(false), 800);
+            }
+            
+            // Автоматическое снятие подсветки
+            setTimeout(() => {
+                clickedItem.classList.remove('pulse');
+            }, 300);
+        }
+        
+        // Завершение игры
+        function endGame(isWin) {
+            state.isGameOver = true;
+            
+            if (isWin) {
+                messageTitleEl.textContent = '🧐 А теперь подумай';
+                messageTextEl.textContent = `Садясь в их кресло, ты платишь,
+                             чтобы потерять частичку себя`;
+                restartBtn.style.display = 'none';
+                restartBtn.textContent = ``;
+            } else {
+                messageTitleEl.textContent = 'Упс!';
+                messageTextEl.textContent = `Не та картинка. Попробуй ещё!`;
+            }
+            
+            messageEl.style.display = 'block';
+        }
+
+        
+        // Обработчик кнопки рестарта
+        restartBtn.addEventListener('click', initGame);
+        
+        // Запуск игры
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.style.margin = '0';
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+            
+            initGame();
+        });
+    </script>
+</body>
+</html>

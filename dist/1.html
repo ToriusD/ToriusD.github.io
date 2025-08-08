@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>С Днём Рождения!</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- Модальное окно для ввода пароля -->
+  <div id="passwordModal" class="modal">
+    <div class="modal-content">
+      <input type="password" id="passwordInput" placeholder="">
+      <button id="submitPassword">Открыть</button>
+      <p id="errorMessage" style="color: red; display: none;">Неверный пароль!</p>
+    </div>
+  </div>
+
+  <!-- Основное содержимое (изначально скрыто) -->
+  <div id="content" style="display: none;">
+    <div class="envelope new">
+      <div class="front">
+        <div class="mail">
+          <p>Вам письмо!</p>
+          <p>&#10022; Нажми на меня &#10022;</p>
+        </div>
+      </div>
+      <div class="back">
+        <div class="letter">
+          <p class="header">Приглашение на испытание РЕАКЦИИ!</p>
+          <div class="sticker">
+            <div class="butt"><a class="gamelink" href="games/baloons/index.html">Нажимай</a></div>
+            <img src="assets/IMG_5526.gif">
+          </div>
+          <div class="sticker">
+            <p>Быстро быстро быстро!</p>
+          </div>
+        </div>
+        <div class="flip left-flip"></div>
+        <div class="flip right-flip"></div>
+        <div class="flip bottom-flip"></div>
+        <div class="flip top-flip"></div>
+      </div>
+    </div>
+
+    <div id='stars'></div>
+    <div id='stars2'></div>
+    <div id='stars3'></div>
+  </div>
+
+  <script src='./jquery.min.js'></script>
+  <script src='./jquery.spritely.min.js'></script>
+  <script src="./script.js"></script>
+</body>
+</html>
