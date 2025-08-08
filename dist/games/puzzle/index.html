@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Собери мозаику</title>
+    <style>
+
+        @font-face {
+            font-family: 'TT_Skip-E 85W'; 
+            src: local('TT_Skip-E 85W'),
+                url(Font.ttf); 
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+            font-family: 'TT_Skip-E 85W', cursive, Arial, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 95%;
+            max-width: 500px;
+            height: 65vh;
+            max-height: 500px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .puzzle-piece {
+            position: absolute;
+            border: 2px solid white;
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        .puzzle-piece:active {
+            transform: scale(0.95);
+        }
+        
+        .puzzle-piece.dragging {
+            z-index: 10;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        #info-panel {
+            width: 95%;
+            max-width: 500px;
+            padding: 12px 0;
+            background: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        #message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 3px solid #ff6b6b;
+            width: 85%;
+            max-width: 400px;
+        }
+        
+        #message h2 {
+            color: #ff6b6b;
+            font-size: 1.5rem;
+            margin: 0 0 12px 0;
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        #message p {
+            color: #555;
+            font-size: 1rem;
+            margin: 0 0 18px 0;
+            line-height: 1.4;
+        }
+
+        #message-text {
+            white-space: pre-line;
+        }
+        
+        #restart-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Comic Sans MS', cursive;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #restart-btn:active {
+            transform: scale(0.95);
+            background: #ff8e8e;
+        }
+
+        @media (max-height: 700px) {
+            #game-container {
+                height: 60vh;
+            }
+        }
+
+        @media (max-height: 600px) {
+            #game-container {
+                height: 55vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Собери пазл</h1>
+    <div id="info-panel">
+        <div><span id="pieces-count">16</span> частей</div>
+    </div>
+    <div id="game-container"></div>
+    <div id="message">
+        <h2 id="message-title">🧐 Куда теперь?</h2>
+        <p id="message-text">«Сходишь?» — пишет мне родная,
+                                Заветную метку подсылая.
+                                Лишь порог я преступаю,
+                                Только «пик» – и забираю</p>
+        <button id="restart-btn">Собрать ещё</button>
+    </div>
+
+    <script>
+        // Конфигурация игры
+        const config = {
+            rows: 3,
+            cols: 3,
+            pieceSpacing: 2,
+            // Предустановленная картинка (можно заменить на свою)
+            imageUrl: 'https://i.pinimg.com/originals/03/29/b6/0329b60c4f59a81e1023a58aec17286a.jpg' // Пример праздничной картинки
+        };
+        
+        // Состояние игры
+        let state = {
+            pieces: [],
+            originalPositions: [],
+            isGameOver: false,
+            draggedPiece: null,
+            startX: 0,
+            startY: 0
+        };
+        
+        // Элементы DOM
+        const gameContainer = document.getElementById('game-container');
+        const piecesCountEl = document.getElementById('pieces-count');
+        const messageEl = document.getElementById('message');
+        const messageTitleEl = document.getElementById('message-title');
+        const messageTextEl = document.getElementById('message-text');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        // Инициализация игры
+        function initGame() {
+            state.pieces = [];
+            state.isGameOver = false;
+            gameContainer.innerHTML = '';
+            messageEl.style.display = 'none';
+            
+            const img = new Image();
+            img.onload = function() {
+                createPuzzle(this);
+            };
+            img.src = config.imageUrl;
+        }
+        
+        // Создание пазла
+        function createPuzzle(img) {
+            const containerWidth = gameContainer.offsetWidth;
+            const containerHeight = gameContainer.offsetHeight;
+            
+            // Рассчитываем размеры пазлов
+            const pieceWidth = Math.floor(containerWidth / config.cols);
+            const pieceHeight = Math.floor(containerHeight / config.rows);
+            
+            // Создаем пазлы
+            for (let row = 0; row < config.rows; row++) {
+                for (let col = 0; col < config.cols; col++) {
+                    const piece = document.createElement('div');
+                    piece.className = 'puzzle-piece';
+                    
+                    // Позиция и размер
+                    const left = col * pieceWidth;
+                    const top = row * pieceHeight;
+                    
+                    piece.style.width = `${pieceWidth - config.pieceSpacing}px`;
+                    piece.style.height = `${pieceHeight - config.pieceSpacing}px`;
+                    piece.style.left = `${left}px`;
+                    piece.style.top = `${top}px`;
+                    
+                    // Вырезаем часть изображения
+                    piece.style.backgroundImage = `url(${img.src})`;
+                    piece.style.backgroundSize = `${containerWidth}px ${containerHeight}px`;
+                    piece.style.backgroundPosition = `-${left}px -${top}px`;
+                    
+                    // Сохраняем оригинальную позицию
+                    state.originalPositions.push({left, top});
+                    
+                    // Добавляем обработчики для перетаскивания
+                    piece.addEventListener('pointerdown', startDrag);
+                    
+                    gameContainer.appendChild(piece);
+                    state.pieces.push({
+                        element: piece,
+                        originalLeft: left,
+                        originalTop: top,
+                        currentLeft: left,
+                        currentTop: top
+                    });
+                }
+            }
+            
+            // Перемешиваем пазлы
+            shufflePieces();
+        }
+        
+        // Перемешивание пазлов
+        function shufflePieces() {
+            const containerWidth = gameContainer.offsetWidth;
+            const containerHeight = gameContainer.offsetHeight;
+            
+            state.pieces.forEach(piece => {
+                const maxX = containerWidth - piece.element.offsetWidth;
+                const maxY = containerHeight - piece.element.offsetHeight;
+                
+                const randomX = Math.floor(Math.random() * maxX);
+                const randomY = Math.floor(Math.random() * maxY);
+                
+                piece.currentLeft = randomX;
+                piece.currentTop = randomY;
+                
+                piece.element.style.left = `${randomX}px`;
+                piece.element.style.top = `${randomY}px`;
+            });
+        }
+        
+        // Начало перетаскивания
+        function startDrag(e) {
+            if (state.isGameOver) return;
+            
+            const piece = e.currentTarget;
+            state.draggedPiece = state.pieces.find(p => p.element === piece);
+            
+            piece.classList.add('dragging');
+            
+            // Для touch событий
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+            
+            state.startX = clientX - piece.offsetLeft;
+            state.startY = clientY - piece.offsetTop;
+            
+            document.addEventListener('pointermove', dragPiece);
+            document.addEventListener('pointerup', stopDrag);
+            document.addEventListener('touchmove', dragPiece, { passive: false });
+            document.addEventListener('touchend', stopDrag);
+        }
+        
+        // Перетаскивание пазла
+        function dragPiece(e) {
+            if (!state.draggedPiece) return;
+            e.preventDefault();
+            
+            const piece = state.draggedPiece.element;
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+            
+            const newX = clientX - state.startX;
+            const newY = clientY - state.startY;
+            
+            // Ограничиваем перемещение в пределах контейнера
+            const maxX = gameContainer.offsetWidth - piece.offsetWidth;
+            const maxY = gameContainer.offsetHeight - piece.offsetHeight;
+            
+            state.draggedPiece.currentLeft = Math.max(0, Math.min(newX, maxX));
+            state.draggedPiece.currentTop = Math.max(0, Math.min(newY, maxY));
+            
+            piece.style.left = `${state.draggedPiece.currentLeft}px`;
+            piece.style.top = `${state.draggedPiece.currentTop}px`;
+        }
+        
+        // Окончание перетаскивания
+        function stopDrag() {
+            if (!state.draggedPiece) return;
+            
+            const piece = state.draggedPiece.element;
+            piece.classList.remove('dragging');
+            
+            // Проверяем, близко ли к оригинальной позиции
+            const threshold = 15;
+            const dx = Math.abs(state.draggedPiece.currentLeft - state.draggedPiece.originalLeft);
+            const dy = Math.abs(state.draggedPiece.currentTop - state.draggedPiece.originalTop);
+            
+            if (dx < threshold && dy < threshold) {
+                // Возвращаем на правильную позицию
+                state.draggedPiece.currentLeft = state.draggedPiece.originalLeft;
+                state.draggedPiece.currentTop = state.draggedPiece.originalTop;
+                
+                piece.style.left = `${state.draggedPiece.originalLeft}px`;
+                piece.style.top = `${state.draggedPiece.originalTop}px`;
+                piece.style.pointerEvents = 'none';
+                
+                // Проверяем, собраны ли все пазлы
+                checkCompletion();
+            }
+            
+            state.draggedPiece = null;
+            document.removeEventListener('pointermove', dragPiece);
+            document.removeEventListener('pointerup', stopDrag);
+            document.removeEventListener('touchmove', dragPiece);
+            document.removeEventListener('touchend', stopDrag);
+        }
+        
+        // Проверка завершения
+        function checkCompletion() {
+            const allCorrect = state.pieces.every(piece => 
+                piece.currentLeft === piece.originalLeft && 
+                piece.currentTop === piece.originalTop
+            );
+            
+            if (allCorrect) {
+                state.isGameOver = true;
+                messageEl.style.display = 'block';
+            }
+        }
+        
+        // Обработчик кнопки рестарта
+        restartBtn.addEventListener('click', initGame);
+        restartBtn.style.display = 'none';
+        
+        // Запуск игры
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.style.margin = '0';
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+            
+            initGame();
+        });
+    </script>
+</body>
+</html>
