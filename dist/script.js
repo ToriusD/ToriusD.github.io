@@ -1,6 +1,6 @@
 $(function(){
   // Правильный пароль (замените на свой)
-  const correctPassword = "09082004"; 
+  const correctPassword = "ксенон"; 
   
   // Проверка пароля при клике на кнопку
   $("#submitPassword").click(function() {
